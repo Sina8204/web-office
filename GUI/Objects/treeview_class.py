@@ -28,6 +28,7 @@ class inspector ():
         self.root.columnconfigure(0, weight=1)  # اجازه کشش به ستون ۰ در ریشه
         self.root.rowconfigure(1, weight=1)
         self.parameters_list = []
+        self.check_vars = {}
         #
         self.tagName_frame = tk.Frame(self.root) #this frame is for name and path of item clicked
         self.tagName_frame.columnconfigure(1, weight=1)
@@ -50,8 +51,22 @@ class inspector ():
         self.path_label.grid(row=1 , column=0)
         self.pathEntry.grid(row=1 , column=1  , sticky="ew")
         #####################style frame details#######################
-        self.general_exert = tk.Button(self.style_frame , text="Exert all" , command=self.exert_all)
-        self.general_exert.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        self.inspect_tools_frame = tk.Frame(self.style_frame)
+        self.inspect_tools_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        self.inspect_tools_frame.grid_rowconfigure(0, weight=1)  # سطر بوم و اسکرول‌بار
+        self.inspect_tools_frame.grid_columnconfigure(0, weight=1)  # ستون بوم
+        self.inspect_tools_frame.grid_columnconfigure(1, weight=1)  # ستون بوم
+        self.inspect_tools_frame.grid_columnconfigure(2, weight=1)  # ستون بوم
+        
+        self.general_exert = tk.Button(self.inspect_tools_frame , text="Exert all" , command=self.exert_all)
+        self.general_exert.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        
+        self.add_newStyle = tk.Button(self.inspect_tools_frame , text="Add style" , command=self.add_style)
+        self.add_newStyle.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+
+        self.delete_Style = tk.Button(self.inspect_tools_frame , text="Delete style" , command=self.style_delete)
+        self.delete_Style.grid(row=0, column=2, sticky="ew", padx=5, pady=5)
+        
         self.styles_canvas = tk.Canvas(self.style_frame)
         self.scrollbar = ttk.Scrollbar(self.style_frame, orient="vertical", command=self.styles_canvas.yview)
 
@@ -77,13 +92,20 @@ class inspector ():
         #####################style frame details#######################
         
 
-    def add_style(self , style_name : str , value_mode ):
+    def add_style(self , style_name = "" , value_mode = ""):
+        if self.pathEntry.get() == "" or self.tagName_entry.get() ==():
+            return
         style_widget_frame = tk.Frame(self.scrollable_frame , bd=5, relief="ridge")
         style_widget_frame.pack(pady=5 , fill=tk.X , expand=True)
 
         styleName_entry = tk.Entry(style_widget_frame , width=10)
         value_style = tk.Entry(style_widget_frame , width=10)
         colon_lb = tk.Label(style_widget_frame , text= " : ")
+
+        check_btn_delete = tk.Checkbutton(style_widget_frame)
+        self.check_vars.update({str(check_btn_delete) : tk.IntVar()})
+        check_btn_delete.config(variable=self.check_vars[str(check_btn_delete)])
+        #print(self.check_vars)
 
         # تعریف دکمه با lambda برای ارسال entryها به تابع
         exert_button = tk.Button(
@@ -92,16 +114,51 @@ class inspector ():
             command=lambda e1=styleName_entry, e2=value_style: self.style_exerter(e1, e2)
         )
 
+        check_btn_delete.pack(side="left", padx=5)
         exert_button.pack(side="left" , padx=5)
-        styleName_entry.pack(side="left")
-        colon_lb.pack(side="left")
-        value_style.pack(side="left")
+        styleName_entry.pack(side="left" , padx=5)
+        colon_lb.pack(side="left", padx=5)
+        value_style.pack(side="left", padx=5)
+        
 
         styleName_entry.insert(0 , style_name)
         value_style.insert(0 , value_mode)
+        self.update_scrollregion()
+    
+    def exert_style_after_removing(self , nameStyle):
+        style_path = self.pathEntry.get()
+        style = load_styles(style_path)
+        json_file = style["json"]
+        json_file["style"].pop(nameStyle)
+        with open(style_path, "w+", encoding="utf-8") as f:
+            json.dump(json_file, f, ensure_ascii=False, indent=4)
+
+    def style_delete (self):
+        child_list = self.scrollable_frame.winfo_children()
+        for child in child_list: #read all children of self.scrollable_frame as list
+        # بررسی اینکه آیا child یک فریم است
+            if isinstance(child, tk.Frame):
+                    entries = child.winfo_children() #get children of scrollable_frame frame readed
+                    style_name = None
+                    for widget in entries:
+                        if isinstance(widget, tk.Entry):
+                            if style_name is None:
+                                style_name = widget.get()
+
+                        if isinstance(widget , tk.Checkbutton):
+                            if self.check_vars[str(widget)].get() :
+                                print(f"Check var : {self.check_vars[str(widget)].get()}")
+                                self.exert_style_after_removing(style_name)
+                                child.destroy()
+                                self.check_vars.pop(str(widget))
+                            break
+        
 
         
     def style_exerter(self, styleName_entry, value_style):
+        if styleName_entry.get() == "" or value_style.get() == "" :
+            return
+        #
         style_path = self.pathEntry.get()
         name_style = styleName_entry.get()
         style = load_styles(style_path)
@@ -135,8 +192,25 @@ class inspector ():
                         json.dump(json_file, f, ensure_ascii=False, indent=4)
 
 
+    def update_scrollregion(self):
+        bbox = self.styles_canvas.bbox("all")
+        if bbox:
+            canvas_height = self.styles_canvas.winfo_height()
+            content_height = bbox[3] - bbox[1]
+            if content_height > canvas_height:
+                self.styles_canvas.config(scrollregion=bbox)
+            else:
+                # اگر محتوا کوچکتر از بوم بود، اسکرول رو غیرفعال کن
+                self.styles_canvas.config(scrollregion=(0, 0, 0, canvas_height))
+
     def _on_mousewheel(self, event):
-        self.styles_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        bbox = self.styles_canvas.bbox("all")
+        if bbox:
+            canvas_height = self.styles_canvas.winfo_height()
+            content_height = bbox[3] - bbox[1]
+            if content_height > canvas_height:
+                self.styles_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
 
 
 
