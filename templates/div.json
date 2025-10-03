@@ -1,0 +1,11 @@
+{
+    "name": "div",
+    "class": "test",
+    "id": "div_id",
+    "style": {
+        "width": {
+            "value": "900",
+            "state": 0
+        }
+    }
+}

@@ -3,6 +3,12 @@ import tkinter as tk
 from tkinter import ttk
 import json
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__) , '..' , 'Objects')))
+from variables import general_variables , open_fileExplorer
+
+general_vars = general_variables()
+file_explorer = open_fileExplorer()
+
 def load_styles(path):
     existing_data = {}
     try:
@@ -25,9 +31,9 @@ def load_styles(path):
 
 class manager():
     #def __init__(self , root  , inspect : inspector , select_mode = "browse" , hover_background_color = "lightcyan" ):
-    def __init__(self , root  , select_mode = "browse" , hover_background_color = "lightcyan" ):
+    def __init__(self , root , inspector , select_mode = "browse" , hover_background_color = "lightcyan" ):
         self.root = root
-        #self.inspect = inspect
+        self.inspect = inspector
         self.select_mode = select_mode
         self.hover_background_color = hover_background_color
         self.item_clicked = "html"
@@ -51,10 +57,29 @@ class manager():
         self.tree.insert(self.tree.selection() , "end", text=name)
         self.tree.item(self.tree.selection() , open=True)
         #print(self.tree.item())
+    
+    def get_all_tree_childeren(self , tree : ttk.Treeview, item):
+        names = []
+        children = tree.get_children(item)
+        for child in children:
+            name = tree.item(child, 'text')
+            names.append(name)
+            names.extend(self.get_all_tree_childeren(tree, child))
+        return names
     def delete_tag(self):
         self.selected_items = self.tree.selection()
+        selected_item_name = self.tree.item(self.selected_items , 'text')
+        print (f"{selected_item_name} : {self.get_all_tree_childeren(self.tree , self.selected_items)}")
         #for item in selected_items:
         if self.selected_items:
+            for child in self.get_all_tree_childeren(self.tree , self.selected_items):
+                if child in general_vars.get_inputed_templates():
+                    general_vars.delete_tree_item(child)
+            print (f"check : [{selected_item_name}] == [{general_vars.get_inputed_templates()}]")
+            if selected_item_name in general_vars.get_inputed_templates():
+                print("removing...")
+                general_vars.delete_tree_item(selected_item_name)
+                print(f"{selected_item_name} was deleted ")
             self.tree.delete(self.selected_items)
 
     
@@ -63,7 +88,8 @@ class manager():
         self.is_dragging = False
 
     def start_drag_item(self , event):
-        self.load_template_detail_inspector()
+        #self.load_template_detail_inspector()
+        self.load_style_selected_template_in_inspector()
         self.dragging_items = self.tree.selection()
         for item in self.dragging_items:
             self.tree.item(item, tags=("highlight"))
@@ -117,6 +143,34 @@ class manager():
         self.hovered_item = None
         self.is_dragging = True
     
+    def clear_widgets(self):
+        for widget in self.inspect.scrollable_frame.winfo_children():
+            widget.destroy()
+        
+    def load_style_selected_template_in_inspector(self):
+        self.item_clicked = self.tree.item(self.tree.selection())['text'] ############### انتخاب قالب های خارجی تعیین شود
+        path_temp = f"{general_vars.get_pathes()["in_temps_path"]}/{self.item_clicked}.json"
+        item_info = {}
+        style = {}
+        print(self.item_clicked)
+        if os.path.exists(path_temp) :
+            print(path_temp)
+            with open(path_temp , "r" , encoding='utf-8') as f:
+                item_info = json.load(f)
+            style = item_info["style"]
+            print(f"Item info : {item_info}")
+            print(f"STYLE : {style}")
+            # print(f"STYLE : {list(style["style"].keys())}")
+            self.inspect.input_item_info(item_info , path_temp)
+            self.clear_widgets()
+            for style_name in list(style.keys()):
+                self.inspect.add_style(style_name , style[style_name]["value"] , writable = style[style_name]["state"])
+
+
+    
+
+
+
     # def clear_widgets(self):
     #     for widget in self.inspect.scrollable_frame.winfo_children():
     #         widget.destroy()

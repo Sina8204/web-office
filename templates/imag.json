@@ -1,0 +1,19 @@
+{
+    "name": "image",
+    "class": "test",
+    "id": "div_id",
+    "style": {
+        "width": {
+            "value": "80",
+            "state": 0
+        },
+        "a": {
+            "value": "aaa",
+            "state": true
+        },
+        "b": {
+            "value": "777",
+            "state": true
+        }
+    }
+}

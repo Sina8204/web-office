@@ -1,7 +1,73 @@
+
+import sys , os
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk , filedialog
 from Objects.tree_view import manager
 from design_tab import tags_manager_panel_gui
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__) , '..' , 'Objects')))
+from Objects.variables import general_variables
+
+file_tools = general_variables()
+
+def build_tree(tree, parent, path):
+    try:
+        items = sorted(os.listdir(path))
+        for item in items:
+            full_path = os.path.join(path, item)
+            display_name = f"📁 {item}" if os.path.isdir(full_path) else f"📄 {item}"
+            node = tree.insert(parent, 'end', text=display_name, values=[full_path])
+            if os.path.isdir(full_path):
+                build_tree(tree, node, full_path)
+    except PermissionError:
+        pass
+
+def open_file():
+    file_tools.open_folder("")
+    if file_tools.project_path:
+        tree.delete(*tree.get_children())
+        root_name = os.path.basename(file_tools.project_path)
+        root_node = tree.insert('', 'end', text=f"📁 {root_name}", values=[file_tools.project_path], open=True)
+        build_tree(tree, root_node, file_tools.project_path)
+    
+
+root = tk.Tk()
+root.title("menu")
+root.geometry("1280x720")
+
+menu = tk.Menu(root)
+root.config(menu=menu)
+
+filemenu = tk.Menu(menu , tearoff=False)
+editmenu = tk.Menu(menu , tearoff=False)
+settingsMenu = tk.Menu(menu , tearoff=False)
+
+menu.add_cascade(label="File" , menu=filemenu)
+menu.add_cascade(label="Edit" , menu=editmenu)
+menu.add_cascade(label="Settings" , menu=settingsMenu)
+
+filemenu.add_command(label="New")
+filemenu.add_command(label="Open" , command = open_file)
+filemenu.add_separator()
+filemenu.add_command(label="Save")
+filemenu.add_command(label="Save as")
+filemenu.add_separator()
+filemenu.add_command(label="Exit" , command=root.quit)
+
+editmenu.add_command(label="Copy")
+editmenu.add_command(label="Cut")
+editmenu.add_command(label="Paste")
+
+
+settingsMenu.add_command(label="Open")
+settingsMenu.add_separator()
+settingsMenu.add_command(label="Templates path")
+settingsMenu.add_command(label="Project path")
+
+tree = ttk.Treeview(root, columns=("fullpath",), show="tree")
+tree.pack(fill='both', expand=True)
+
+root.mainloop()
 
 # ########################### <design_tab_gui> ###########################
 # root = tk.Tk()
@@ -63,117 +129,118 @@ from design_tab import tags_manager_panel_gui
 # ########################### <tags_manager_panel_gui> ###########################
 
 # ########################### <inspector_panel_gui> ###########################
-root = tk.Tk()
-root.title("design tab")
-root.geometry("400x600")
+# root = tk.Tk()
+# root.title("design tab")
+# root.geometry("400x600")
 
-root.columnconfigure(0 , weight=1)
-root.rowconfigure(1 , weight=1)
+# root.columnconfigure(0 , weight=1)
+# root.rowconfigure(1 , weight=1)
 
-#++++++++++++++++++++++++ <Frames> #++++++++++++++++++++++++
-detail_frame = tk.Frame(root)
-detail_frame.columnconfigure(1 , weight=1)
-detail_frame.grid(row=0 , column=0 , sticky="ew")
+# #++++++++++++++++++++++++ <Frames> #++++++++++++++++++++++++
+# detail_frame = tk.Frame(root)
+# detail_frame.columnconfigure(1 , weight=1)
+# detail_frame.grid(row=0 , column=0 , sticky="ew")
 
-css_styles_frame = tk.Frame(root)
-css_styles_frame.columnconfigure(0 , weight=1)
-css_styles_frame.columnconfigure(1 , weight=0)
-css_styles_frame.rowconfigure(1 , weight=1)
-css_styles_frame.grid(row=1 , column=0 , sticky="nsew")
+# css_styles_frame = tk.Frame(root)
+# css_styles_frame.columnconfigure(0 , weight=1)
+# css_styles_frame.columnconfigure(1 , weight=0)
+# css_styles_frame.rowconfigure(1 , weight=1)
+# css_styles_frame.grid(row=1 , column=0 , sticky="nsew")
 
-general_tools_frame = tk.Frame(css_styles_frame)
-general_tools_frame.columnconfigure(0 , weight=1)
-general_tools_frame.columnconfigure(1 , weight=1)
-general_tools_frame.columnconfigure(2 , weight=1)
+# general_tools_frame = tk.Frame(css_styles_frame)
+# general_tools_frame.columnconfigure(0 , weight=1)
+# general_tools_frame.columnconfigure(1 , weight=1)
+# general_tools_frame.columnconfigure(2 , weight=1)
 
-styles_frame = tk.Frame(css_styles_frame)
-styles_frame.columnconfigure(0, weight=1)  # ستون بوم
-styles_frame.columnconfigure(1, weight=0)  # ستون بوم
-styles_frame.rowconfigure(1, weight=1)  # سطر بوم و اسکرول‌بار
+# styles_frame = tk.Frame(css_styles_frame)
+# styles_frame.columnconfigure(0, weight=1)  # ستون بوم
+# styles_frame.columnconfigure(1, weight=0)  # ستون بوم
+# styles_frame.rowconfigure(1, weight=1)  # سطر بوم و اسکرول‌بار
 
-general_tools_frame.grid(row=0 , column=0 , sticky="ew")
-styles_frame.grid(row=1 , column=0 , sticky="nsew")
-#++++++++++++++++++++++++ <widgets> #++++++++++++++++++++++++
-class_label = tk.Label(detail_frame , text="Class : " , font=("Arial" , 14))
-id_label = tk.Label(detail_frame , text="ID : " , font=("Arial" , 14))
-name_label = tk.Label(detail_frame , text="Name : " , font=("Arial" , 14))
-path_label = tk.Label(detail_frame , text="Path :" , font=("Arial" , 14))
-call_type_label = tk.Label(detail_frame , text="Call type :" , font=("Arial" , 14))
+# general_tools_frame.grid(row=0 , column=0 , sticky="ew")
+# styles_frame.grid(row=1 , column=0 , sticky="nsew")
+# #++++++++++++++++++++++++ <widgets> #++++++++++++++++++++++++
+# class_label = tk.Label(detail_frame , text="Class : " , font=("Arial" , 14))
+# id_label = tk.Label(detail_frame , text="ID : " , font=("Arial" , 14))
+# name_label = tk.Label(detail_frame , text="Name : " , font=("Arial" , 14))
+# path_label = tk.Label(detail_frame , text="Path :" , font=("Arial" , 14))
+# call_type_label = tk.Label(detail_frame , text="Call type :" , font=("Arial" , 14))
 
-class_entry = tk.Entry(detail_frame , font=("Arial" , 14))
-id_entry = tk.Entry(detail_frame , font=("Arial" , 14))
-name_entry = tk.Entry(detail_frame , font=("Arial" , 14) , state="readonly")
-path_entry = tk.Entry(detail_frame , font=("Arial" , 14) , state="readonly")
+# class_entry = tk.Entry(detail_frame , font=("Arial" , 14))
+# id_entry = tk.Entry(detail_frame , font=("Arial" , 14))
+# name_entry = tk.Entry(detail_frame , font=("Arial" , 14) , state="readonly")
+# path_entry = tk.Entry(detail_frame , font=("Arial" , 14) , state="readonly")
 
-call_type_combobox = ttk.Combobox(detail_frame , values=["id" , "class" , "name"] , state="readonly")
+# call_type_combobox = ttk.Combobox(detail_frame , values=["id" , "class" , "name"] , state="readonly")
 
-class_label.grid(row=0 , column= 0)
-id_label.grid(row=1 , column= 0)
-name_label.grid(row=2 , column= 0)
-path_label.grid(row=3 , column= 0)
-call_type_label.grid(row=4 , column=0)
+# class_label.grid(row=0 , column= 0)
+# id_label.grid(row=1 , column= 0)
+# name_label.grid(row=2 , column= 0)
+# path_label.grid(row=3 , column= 0)
+# call_type_label.grid(row=4 , column=0)
 
-class_entry.grid(row=0 , column= 1 , sticky="ew")
-id_entry.grid(row=1 , column= 1 , sticky="ew")
-name_entry.grid(row=2 , column= 1 , sticky="ew")
-path_entry.grid(row=3 , column= 1 , sticky="ew")
-call_type_combobox.grid(row=4 , column=1 , sticky="ew" )
+# class_entry.grid(row=0 , column= 1 , sticky="ew")
+# id_entry.grid(row=1 , column= 1 , sticky="ew")
+# name_entry.grid(row=2 , column= 1 , sticky="ew")
+# path_entry.grid(row=3 , column= 1 , sticky="ew")
+# call_type_combobox.grid(row=4 , column=1 , sticky="ew" )
 
-#///////////////////////////////////////////////////////////////
-button_general_exert = tk.Button(general_tools_frame , text="General exert")
-button_add_style = tk.Button(general_tools_frame , text="Add style")
-button_Delet = tk.Button(general_tools_frame , text="Delete style")
+# #///////////////////////////////////////////////////////////////
+# button_general_exert = tk.Button(general_tools_frame , text="General exert")
+# button_add_style = tk.Button(general_tools_frame , text="Add style")
+# button_Delet = tk.Button(general_tools_frame , text="Delete style")
 
-button_general_exert.grid(row=0 , column=0 , padx=5 , pady=5 , sticky="ew")
-button_add_style.grid(row=0 , column=1 , padx=5 , pady=5 , sticky="ew")
-button_Delet.grid(row=0 , column=2 , padx=5 , pady=5 , sticky="ew")
+# button_general_exert.grid(row=0 , column=0 , padx=5 , pady=5 , sticky="ew")
+# button_add_style.grid(row=0 , column=1 , padx=5 , pady=5 , sticky="ew")
+# button_Delet.grid(row=0 , column=2 , padx=5 , pady=5 , sticky="ew")
 
-#///////////////////////////////////////////////////////////////
-styles_canvas = tk.Canvas(styles_frame)
-scrollbar = ttk.Scrollbar(styles_frame, orient="vertical", command=styles_canvas.yview)
-
-styles_canvas.grid(row=1, column=0, sticky="nsew")
-scrollbar.grid(row=1, column=1, sticky="ns")
-
-styles_canvas.configure(yscrollcommand=scrollbar.set)
-
-scrollable_frame = ttk.Frame(styles_canvas)
-
-scrollable_frame.bind(
-    "<Configure>",
-    lambda e: (
-        styles_canvas.update_idletasks(),
-        styles_canvas.configure(scrollregion=styles_canvas.bbox("all"))
-    )
-)
-
-canvas_window = styles_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-
-for i in range(50):
-    tk.Label(scrollable_frame, text=f"test {i}").pack()
-
-root.mainloop()
-########################## <inspector_panel_gui> ###########################
-
+# #///////////////////////////////////////////////////////////////
 # styles_canvas = tk.Canvas(styles_frame)
 # scrollbar = ttk.Scrollbar(styles_frame, orient="vertical", command=styles_canvas.yview)
-# # استفاده از grid برای کنترل بهتر
+
 # styles_canvas.grid(row=1, column=0, sticky="nsew")
 # scrollbar.grid(row=1, column=1, sticky="ns")
 
 # styles_canvas.configure(yscrollcommand=scrollbar.set)
 
-# scrollable_frame = tk.Frame(styles_canvas)
-        
-# # اتصال قاب داخلی به بوم
+# scrollable_frame = ttk.Frame(styles_canvas)
+
 # scrollable_frame.bind(
 #     "<Configure>",
-#     lambda e: styles_canvas.configure(
-#     scrollregion=styles_canvas.bbox("all")
-#         )
+#     lambda e: (
+#         styles_canvas.update_idletasks(),
+#         styles_canvas.configure(scrollregion=styles_canvas.bbox("all"))
 #     )
+# )
 
 # canvas_window = styles_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
 # for i in range(50):
-#     tk.Label(scrollable_frame , text=f"test {i}")
-# styles_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+#     tk.Label(scrollable_frame, text=f"test {i}").pack()
+
+# root.mainloop()
+
+
+# # styles_canvas = tk.Canvas(styles_frame)
+# # scrollbar = ttk.Scrollbar(styles_frame, orient="vertical", command=styles_canvas.yview)
+# # # استفاده از grid برای کنترل بهتر
+# # styles_canvas.grid(row=1, column=0, sticky="nsew")
+# # scrollbar.grid(row=1, column=1, sticky="ns")
+
+# # styles_canvas.configure(yscrollcommand=scrollbar.set)
+
+# # scrollable_frame = tk.Frame(styles_canvas)
+        
+# # # اتصال قاب داخلی به بوم
+# # scrollable_frame.bind(
+# #     "<Configure>",
+# #     lambda e: styles_canvas.configure(
+# #     scrollregion=styles_canvas.bbox("all")
+# #         )
+# #     )
+
+# # canvas_window = styles_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+# # for i in range(50):
+# #     tk.Label(scrollable_frame , text=f"test {i}")
+# # styles_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+# # ########################## <inspector_panel_gui> ###########################

@@ -1,4 +1,5 @@
-import os
+#show real
+import sys , os
 import tkinter as tk
 from tkinter import ttk
 
@@ -6,6 +7,10 @@ from design_tab import design_gui_class
 from html_tab import html_gui_class
 from css_tab import css_gui_class
 from script_tab import script_gui_class
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__) , '..' , 'Objects')))
+from Objects.variables import general_variables
+from Objects.menu_objects import menu
 
 def creat_folder(folder_name = "My project"):
     project_path = os.getcwd()
@@ -18,12 +23,13 @@ class web_office(tk.Tk):
         super().__init__()
         self.title("Web office")
         self.geometry("1280x720")
+        # self.menu_gui = menu(self)
         #creat notebook
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True)
         #creat tabs
         self.design_tab = tk.Frame(self.notebook) #create design tab
-        self.design = design_gui_class(self.design_tab) #adding design class gui to design tab
+        self.design = design_gui_class(self.design_tab , self) #adding design class gui to design tab
         #
         self.html_tab = tk.Frame(self.notebook) #create html tab
         self.html = html_gui_class(self.html_tab) #adding design html gui to design tab
